@@ -1,0 +1,6 @@
+FileVersion = 1
+Projects = {"FreeType.UsageExample" = {Path = "."}, FreeType = "*", SDL2 = "*"}
+Unlocked = ["FreeType"]
+
+[Workspace]
+StartupProject = "FreeType.UsageExample"

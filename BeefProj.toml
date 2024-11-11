@@ -1,0 +1,8 @@
+FileVersion = 1
+Dependencies = {corlib = "*", FreeType = "*", SDL2 = "*"}
+
+[Project]
+Name = "FreeType.UsageExample"
+Version = "0.1"
+TargetType = "BeefGUIApplication"
+StartupObject = "FreeType.UsageExample.Program"

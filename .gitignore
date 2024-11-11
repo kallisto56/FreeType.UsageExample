@@ -1,0 +1,4 @@
+.DS_Store
+**/build/*
+**/recovery/*
+BeefSpace_User.toml
