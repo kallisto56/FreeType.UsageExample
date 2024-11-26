@@ -21,6 +21,8 @@ extension FreeType
 		public float mPointSize;
 		public float mLineHeight;
 		public float mAscent;
+		public float mCapHeight;
+		public float mMeanline;
 		public float mDescent;
 
 
@@ -51,6 +53,15 @@ extension FreeType
 			this.mLineHeight = this.mHandle.size.metrics.height / FT_FIXED_POINT_SCALE;
 			this.mAscent = this.mHandle.size.metrics.ascender / FT_FIXED_POINT_SCALE;
 			this.mDescent = this.mHandle.size.metrics.descender / FT_FIXED_POINT_SCALE;
+			this.mCapHeight = this.CalculateHeight('H') / FT_FIXED_POINT_SCALE;
+			this.mMeanline = this.CalculateHeight('x') / FT_FIXED_POINT_SCALE;
+		}
+
+
+		FT_Pos CalculateHeight (char32 char)
+		{
+			FT_Load_Char(this.mHandle, uint32(char), .FT_LOAD_DEFAULT).Check!();
+			return this.mHandle.glyph.metrics.height;
 		}
 
 

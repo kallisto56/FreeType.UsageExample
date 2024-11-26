@@ -16,6 +16,7 @@ class Program : SDLApp
 
 	public FreeType.Font mFontSmall;
 	public FreeType.Font mFontNormal;
+	public FreeType.Font mFontLarge;
 	public FreeType.Font mFontSDF;
 
 
@@ -37,6 +38,7 @@ class Program : SDLApp
 	{
 		this.mFontSmall = this.LoadFont(this.mFontFileName, 14, .FT_RENDER_MODE_LIGHT).Resolve!();
 		this.mFontNormal = this.LoadFont(this.mFontFileName, this.mPointSize, .FT_RENDER_MODE_NORMAL).Resolve!();
+		this.mFontLarge = this.LoadFont(this.mFontFileName, 96, .FT_RENDER_MODE_NORMAL).Resolve!();
 		this.mFontSDF = this.LoadFont(this.mFontFileName, this.mPointSize, .FT_RENDER_MODE_SDF).Resolve!();
 
 		return .Ok;
@@ -56,7 +58,7 @@ class Program : SDLApp
 		{
 			mFontFace = fontFace,
 			mPointSize = pointSize,
-			mCharacterSets = scope StringView[] (CharacterSets.EN, CharacterSets.Numbers, CharacterSets.Symbols),
+			mCharacterSets = scope StringView[] (CharacterSets.EN, CharacterSets.FR, CharacterSets.Numbers, CharacterSets.Symbols),
 			mRenderMode = renderMode,
 		};
 
@@ -78,6 +80,7 @@ class Program : SDLApp
 
 	public ~this ()
 	{
+		delete this.mFontLarge;
 		delete this.mFontNormal;
 		delete this.mFontSmall;
 		delete this.mFontSDF;
@@ -102,6 +105,73 @@ class Program : SDLApp
 		SDL.SetRenderDrawColor(this.mRenderer, 0, 0, 0, 200);
 		SDL.RenderFillRect(this.mRenderer, &rectangle);
 		this.DrawString("This project uses the FreeType library, which is licensed under the FreeType License.", tx, height - this.mFontSmall.mLineHeight, this.mFontSmall);
+
+		this.DrawCharacter();
+	}
+
+
+	public void DrawCharacter ()
+	{
+		var x = 32;
+		var y = 300;
+		SDL.GetWindowSize(this.mWindow, var width, ?);
+
+		var ax = 620; // x-coordinate for annotations
+
+		var font = this.mFontLarge;
+		var text = "TypogrÀphy";
+
+		var ascentColor = SDL.Color(233, 216, 166, 255);
+		var capHeightColor = SDL.Color(238, 155, 0, 255);
+		var meanlineColor = SDL.Color(202, 103, 2, 255);
+		var baselineColor = SDL.Color(187, 62, 3, 255);
+		var descentColor = SDL.Color(174, 32, 18, 255);
+
+		var baseline = int(y);
+		var ascent = int(baseline - font.mAscent);
+		var descent = int(baseline - font.mDescent);
+		var xHeight = int(baseline - font.mMeanline);
+		var capHeight = int(baseline - font.mCapHeight);
+
+		// Black rect to tone down background
+		DrawRect(0, int(y - font.mLineHeight), width, int(font.mLineHeight - font.mDescent * 2), SDL.Color(0, 0, 0, 200));
+
+		// Origin point for DrawString
+		{
+			DrawRect(x-4, baseline-4, 9, 9, baselineColor);
+			DrawRect(x, int(baseline-font.mLineHeight), 1, int(font.mLineHeight), baselineColor);
+		}
+
+		// Ascent
+		DrawRect(0, ascent, width, 1, ascentColor);
+		this.DrawString("Ascent", ax, ascent - 1, this.mFontSmall, ascentColor);
+
+		// CapHeight
+		DrawRect(0, capHeight, width, 1, capHeightColor);
+		this.DrawString("CapHeight (height of the capital letters)", ax, capHeight - 1, this.mFontSmall, capHeightColor);
+
+		// Meanline (also known as x-height
+		DrawRect(0, xHeight, width, 1, meanlineColor);
+		this.DrawString("Meanline (also known as x-height)", ax, xHeight - 1, this.mFontSmall, meanlineColor);
+
+		// Baseline
+		DrawRect(0, baseline-1, width, 3, baselineColor);
+		this.DrawString("Baseline", ax, baseline - 2, this.mFontSmall, baselineColor);
+
+		// Descent
+		DrawRect(0, descent, width, 1, descentColor);
+		this.DrawString("Descent", ax, descent - 1, this.mFontSmall, descentColor);
+
+		// ...
+		this.DrawString(text, x, y, font);
+	}
+
+
+	public void DrawRect (int x, int y, int width, int height, SDL.Color color = SDL.Color(255, 255, 255, 255))
+	{
+		SDL.Rect rectangle = SDL.Rect(int32(x), int32(y), int32(width), int32(height));
+		SDL.SetRenderDrawColor(this.mRenderer, color.r, color.g, color.b, color.a);
+		SDL.RenderFillRect(this.mRenderer, &rectangle);
 	}
 
 
@@ -129,7 +199,7 @@ class Program : SDLApp
 			if (n + 1 < textContent.Length)
 				rhs = textContent.GetChar32(n + 1).c;
 
-			if (font.GetMetrics(lhs, rhs, x, y, var metrics) == false)
+			if (font.GetMetrics(lhs, rhs, var metrics) == false)
 				continue;
 
 			SDL.Rect srcRect = SDL.Rect(

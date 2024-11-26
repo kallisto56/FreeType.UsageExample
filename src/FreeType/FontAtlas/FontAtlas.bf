@@ -17,6 +17,8 @@ extension FreeType
 		public float mPointSize;
 		public float mLineHeight;
 		public float mAscent;
+		public float mCapHeight;
+		public float mMeanline;
 		public float mDescent;
 		public float mMaxAdvance;
 
@@ -29,6 +31,8 @@ extension FreeType
 			this.mPointSize = description.mPointSize;
 			this.mLineHeight = description.mFontFace.mLineHeight;
 			this.mAscent = description.mFontFace.mAscent;
+			this.mCapHeight = description.mFontFace.mCapHeight;
+			this.mMeanline = description.mFontFace.mMeanline;
 			this.mDescent = description.mFontFace.mDescent;
 
 			String characterSet = Self.ParseCharacterSet(description.mCharacterSets, .. scope String());
@@ -36,15 +40,18 @@ extension FreeType
 			defer { package.Dispose(); }
 
 			int countMissingGlyphs = 0;
-			for (uint32 n = 0; n < characterSet.Length; n++)
+			int idx = 0;
+			while (idx < characterSet.Length)
 			{
-				char32 unicode = characterSet.GetChar32(n).c;
+				var char = characterSet.GetChar32(idx);
 
-				if (this.GenerateGlyph(unicode, package) == false)
+				if (this.GenerateGlyph(char.c, package) == false)
 				{
 					countMissingGlyphs++;
 					continue;
 				}
+
+				idx += char.length;
 			}
 
 			if (countMissingGlyphs > 0)
@@ -151,8 +158,8 @@ extension FreeType
 				glyph.mTexCoords = float[4] (
 					float(glyph.mPixelCoords[0]) / float(atlas.mWidth),
 					float(glyph.mPixelCoords[1]) / float(atlas.mHeight),
-					float(glyph.mPixelCoords[2]) / float(atlas.mWidth),
-					float(glyph.mPixelCoords[3]) / float(atlas.mHeight)
+					float(glyph.mPixelCoords[0] + glyph.mPixelCoords[2]) / float(atlas.mWidth),
+					float(glyph.mPixelCoords[1] + glyph.mPixelCoords[3]) / float(atlas.mHeight)
 				);
 			}
 	
@@ -210,7 +217,7 @@ extension FreeType
 		}
 
 	
-		public bool GetMetrics (char32 lhsUnicode, char32? rhsUnicode, float x, float y, out Font.Metrics glyphMetrics)
+		public bool GetMetrics (char32 lhsUnicode, char32? rhsUnicode, out Font.Metrics glyphMetrics)
 		{
 			glyphMetrics = Font.Metrics();
 			Kerning kerning = Kerning(0, 0);
@@ -254,13 +261,16 @@ extension FreeType
 
 		static void ParseCharacterSet (StringView[] characterSets, String buffer)
 		{
-			HashSet<char8> hashSet = scope HashSet<char8>();
+			HashSet<char32> hashSet = scope HashSet<char32>();
 			for (var setIdx = 0; setIdx < characterSets.Count; setIdx++)
 			{
 				var set = characterSets[setIdx];
-				for (var n = 0; n < set.Length; n++)
+				var idx = 0;
+				while (idx < set.Length)
 				{
-					hashSet.TryAdd(set[n], ?);
+					var char = set.GetChar32(idx);
+					hashSet.TryAdd(char.c, ?);
+					idx += char.length;
 				}
 			}
 
